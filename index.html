@@ -3,7 +3,7 @@
 
 <head>
     <title></title>
-    <script src="https://unpkg.com/vue"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
     <link rel="stylesheet" href="design.css">
     <script src="products.js"></script>
@@ -106,7 +106,7 @@
                                         <label for="name">Phone Number</label>
                                         <input v-model="user.number" type="tel" required>
                                     </div>
-                                    <input type="submit" value="Checkout">
+                                    <input type="submit" onclick="return false" @click="submit" value="Checkout">
                                 </form>
                                 </div>
                             </div>
@@ -135,6 +135,11 @@
                     number: ''
                 }
             },
+            async created() {
+                let course = await fetch("https://individual2cw.herokuapp.com/collection/lesson")
+                let result = await course.json()
+                this.lessons = result
+            },
             methods: {
                 addToCart(lesson) {
                     this.lessons.find(item => item.id == lesson.id).availableInventory -= 1;
@@ -150,16 +155,31 @@
                     this.showProduct = !this.showProduct;
                 },
                 submit() {
-                    if (this.phonenumber(this.user.number)) {
-                        alert('Your Lesson has been booked.')
-                        // console.log(this.user);
+                    let orders = {
+                        checkoutName: this.user.name,
+                        checkoutPhone: this.user.number,
+                        cartProduct: this.cart,
                     }
+
+                    fetch('https://individual2cw.herokuapp.com/collection/order', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        mode: "cors",
+                        cache: "no-store",
+                        body: JSON.stringify(orders),
+                    })
+                    .then(response => response.json())
+                    .catch((error) => {
+                        console.log(error);
+                    });
                 },
                 phonenumber(number) {
                     if ((number.match(phoneno))) {
                         return true;
-                    }  
-                }
+                    } 
+                },
             },
             computed: {
                 total() {
@@ -200,9 +220,6 @@
                             })
                     }
                 }
-            },
-            created() {
-                this.lessons = lessons
             }
         });
     </script>
